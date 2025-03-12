@@ -1,65 +1,7 @@
 import streamlit as st
-import sqlite3
 from datetime import datetime, timedelta
 
-class DatabaseManager:
-    def __init__(self, db_name="testSst.db"):
-        self.db_name = db_name
-
-    def connect(self):
-        return sqlite3.connect(self.db_name)
-
-    def execute_query(self, query, params=()):
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        conn.commit()
-        conn.close()
-
-    def fetch_all(self, query, params=()):
-        conn = self.connect()
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        results = cursor.fetchall()
-        conn.close()
-        return results
-
-class ExameManager(DatabaseManager):
-    def listar_exames_vencidos(self):
-        return self.fetch_all("""
-            SELECT funcionarios.nome, exames.nome, exames_realizados.data_realizacao, exames_realizados.validade
-            FROM exames_realizados
-            JOIN funcionarios ON exames_realizados.funcionario_id = funcionarios.id
-            JOIN exames ON exames_realizados.exame_id = exames.id
-            WHERE exames_realizados.validade < DATE('now')
-        """)
-
-    def listar_exames_a_vencer(self, dias=30):
-        return self.fetch_all("""
-            SELECT funcionarios.nome, exames.nome, exames_realizados.data_realizacao, exames_realizados.validade
-            FROM exames_realizados
-            JOIN funcionarios ON exames_realizados.funcionario_id = funcionarios.id
-            JOIN exames ON exames_realizados.exame_id = exames.id
-            WHERE exames_realizados.validade BETWEEN DATE('now') AND DATE('now', ? || ' days')
-        """, (dias,))
-    
-    def registrar_exame_realizado(self, funcionario_id, exame_id, data_realizacao, validade):
-        self.execute_query("""
-            INSERT INTO exames_realizados (funcionario_id, exame_id, data_realizacao, validade)
-            VALUES (?, ?, ?, ?)
-        """, (funcionario_id, exame_id, data_realizacao, validade))
-
-    def calcular_proximo_exame(self, funcionario_id, exame_id, data_realizacao):
-        resultado = self.fetch_all("""
-            SELECT recorrencia FROM exames_necessarios_por_cargo
-            INNER JOIN funcionarios ON exames_necessarios_por_cargo.cargo_id = funcionarios.cargo_id
-            WHERE funcionarios.id = ? AND exames_necessarios_por_cargo.exame_id = ?
-        """, (funcionario_id, exame_id))
-        if resultado:
-            return resultado[0][0]
-            # meses = resultado[0][0]
-            # return data_realizacao + timedelta(days=meses * 30)
-        return None
+from controllers.exames_controller import ExameManager
 
 db_exame = ExameManager()
 
