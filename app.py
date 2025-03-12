@@ -4,6 +4,7 @@ from controllers.exames_controller import ExameManager
 from controllers.cargo_controller import CargoManager
 from controllers.funcionario_controller import FuncionarioManager
 from controllers.regional_controller import RegionalManager
+from controllers.clinicas_controller import ClinicasManager
 
 tabela_recorrencia = {
     "Renovação 6 meses": 6,
@@ -21,6 +22,7 @@ aba = st.sidebar.radio(
         "Gerenciar Regionais",
         "Gerenciar Funcionários",
         "Gerenciar Exames",
+        "Gerenciar Clínicas",
     ],
 )
 
@@ -39,6 +41,7 @@ if aba == "Gerenciar Cargos":
                     st.error(str(e))
             else:
                 st.warning("Por favor, preencha o nome do cargo!")
+
     with st.expander("Cargos Cadastrados"):
         st.subheader("📋 Lista de Cargos")
         cargos = cargoController.listar_cargos()
@@ -57,7 +60,7 @@ if aba == "Gerenciar Cargos":
         )
         exame_id = (
             st.selectbox(
-                "Exame", index=None, placeholder="Selecione o exame", options=exames, format_func=lambda x: x[1]
+                "Exame", index=None, placeholder="Selecione o exame", options=exames, format_func=lambda x: x['nome']
             )
             if exames
             else None
@@ -179,42 +182,76 @@ elif aba == "Gerenciar Funcionários":
             )
 
 elif aba == "Gerenciar Exames":
-    exameController = ExameManager()
-    exames = exameController.listar_exames()
     with st.expander("Cadastrar Exames"):
         exameController = ExameManager()
+        exames = exameController.listar_exames()
         st.header("🩺 Cadastro de Exames")
         nome_exame = st.text_input("Nome do Exame")
-        preco_exame = st.number_input("Preço do Exame", min_value=0.0, step=0.1)
+        # preco_exame = st.number_input("Preço do Exame", min_value=0.0, step=0.1)
         if st.button("Cadastrar Exame"):
-            if nome_exame and preco_exame:
+            if nome_exame:
                 try:
-                    exameController.adicionar_exame(nome_exame, preco_exame)
+                    exameController.adicionar_exame(nome_exame)
                     st.success("Exame cadastrado com sucesso!")
                 except ValueError as e:
                     st.error(str(e))
             else:
                 st.warning("Por favor, preencha o nome e o preço do exame!")
 
-    with st.expander("Editar Exames"):
-        st.header("🩺 Editar Exame")
-        exame_id = (
+    with st.expander("Exames Cadastrados"):
+        st.subheader("📋 Lista de Exames")
+        for exame in exames:
+            st.write(f"ID: {exame['id']} | Nome: {exame['nome']} | Situação: {exame['ativo']}")
+
+elif aba == "Gerenciar Clínicas":
+    with st.expander("Cadastrar Clínicas"):     
+        clinicaController = ClinicasManager()
+        clinicas = clinicaController.listar_clinicas()
+        st.header("🏥 Cadastro de Clínicas")
+        nome_nova_clinica = st.text_input("Nome da Clínica")
+        if st.button("Cadastrar Clínica"):
+            if nome_nova_clinica:
+                try:
+                    clinicaController.cadastrar_clinicas(nome_nova_clinica)
+                    st.success("Clínica cadastrada com sucesso!")
+                except ValueError as e:
+                    st.error(str(e))
+            else:
+                st.warning("Por favor, preencha o nome da clínica!")
+
+    with st.expander("Vincular Exames"):
+        exameController = ExameManager()
+        exames = exameController.listar_exames()
+        st.header("🩺 Vincular Exame")
+        clinica_selecionada = (
+            st.selectbox(
+                "Selecione a Clínica",
+                options=clinicas,
+                format_func=lambda x: x["nome"],
+            )
+            if clinicas
+            else None
+        )
+        
+        exame_selecionado = (
             st.selectbox(
                 "Selecione o Exame",
                 options=exames,
-                format_func=lambda x: x[1],
+                format_func=lambda x: x["nome"],
             )
             if exames
             else None
         )
-        if exame_id:
-            novo_preco = st.number_input("Novo Preço do Exame", min_value=0.0, step=0.1)
-            if st.button("Atualizar Preço"):
-                exameController.atualizar_preco_exame(exame_id[0], novo_preco)
-                st.success("Preço atualizado com sucesso!")
+        if exame_selecionado and clinica_selecionada:
+            preco = st.number_input("Preço do Exame", min_value=0.0, step=0.1)
+            if st.button("Vincular Exame"):
+                try:
+                    clinicaController.vincular_exame_clinica(exame_selecionado['id'],clinica_selecionada['id'], preco)
+                    st.success("Exame vinculado com sucesso!")
+                except ValueError as e:
+                    st.error(str(e))
 
-    with st.expander("Exames Cadastrados"):
-        st.subheader("📋 Lista de Exames")
-        for exame in exames:
-            st.write(f"{exame[0]} - {exame[1]}, Preço: R${exame[2]:.2f}")
-
+    with st.expander("Clínicas Cadastradas"):
+        st.subheader("📋 Lista de Clínicas")
+        for clinica in clinicas:
+            st.write(f"ID: {clinica['id']} - NOME: {clinica['nome']} - SITUAÇÃO: {clinica['ativo']}")

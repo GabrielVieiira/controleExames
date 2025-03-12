@@ -37,18 +37,19 @@ class ExameManager(DatabaseManager):
             # return data_realizacao + timedelta(days=meses * 30)
         return None
 
-    def adicionar_exame(self, nome, preco):
+    def adicionar_exame(self, nome):
         nome = nome.strip().upper()
         primeia_query = "SELECT id FROM exames WHERE nome = ?"
         existe = self.fetch_one(primeia_query, (nome,))
         if existe:
             raise ValueError("Exame já cadastrado")
-        segunda_query = "INSERT INTO exames (nome, preco) VALUES (?, ?)"        
-        self.execute_query(segunda_query, (nome, preco))
+        segunda_query = "INSERT INTO exames (nome) VALUES (?)"        
+        self.execute_query(segunda_query, (nome,))
 
     def listar_exames(self):
         query = "SELECT * FROM exames"
-        return self.fetch_all(query)
+        resposta = self.fetch_all(query)
+        return [{"id": r[0], "nome": r[1], "ativo": "Ativo" if r[2] == True else "Desativado"} for r in resposta]
 
     def atualizar_preco_exame(self, exame_id, novo_preco):
         query = "UPDATE exames SET preco = ? WHERE id = ?"

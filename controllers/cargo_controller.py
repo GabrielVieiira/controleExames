@@ -30,14 +30,20 @@ class CargoManager(DatabaseManager):
         query = ''' 
                 SELECT
                     exames_necessarios_por_cargo.id, 
-                    exames.id, 
-                    exames.nome, 
-                    exames.preco, 
-                    exames_necessarios_por_cargo.recorrencia 
+                    exames.id AS exame_id, 
+                    exames.nome AS exame_nome, 
+                    exames_por_clinica.preco, 
+                    exames_necessarios_por_cargo.recorrencia, 
+                    clinicas.id AS clinica_id,
+                    clinicas.nome AS clinica_nome
                 FROM 
-                    exames 
+                    exames_necessarios_por_cargo
                 INNER JOIN 
-                    exames_necessarios_por_cargo ON exames.id = exames_necessarios_por_cargo.exame_id 
+                    exames ON exames.id = exames_necessarios_por_cargo.exame_id
+                INNER JOIN 
+                    exames_por_clinica epc ON exames.id = exames_por_clinica.exame_id
+                INNER JOIN 
+                    clinicas ON exames_por_clinica.clinica_id = clinicas.id
                 WHERE 
-                    exames_necessarios_por_cargo.cargo_id = ? '''
+                    exames_necessarios_por_cargo.cargo_id = ?; '''
         return self.fetch_all(query, (cargo_id,))
