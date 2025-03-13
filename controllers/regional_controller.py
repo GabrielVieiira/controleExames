@@ -12,4 +12,5 @@ class RegionalManager(DatabaseManager):
 
     def listar_regionais(self):
         query = "SELECT * FROM regionais"
-        return self.fetch_all(query)
+        resposta = self.fetch_all(query)
+        return [{"id": r[0], "nome": r[1]} for r in resposta]

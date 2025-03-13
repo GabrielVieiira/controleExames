@@ -22,3 +22,8 @@ class ClinicasManager(DatabaseManager):
             raise ValueError("Exame já vinculado a esta clinica")
         segunda_query = "INSERT INTO exames_por_clinica (clinica_id, exame_id, preco) VALUES (?, ?, ?)"
         self.execute_query(segunda_query, (clinica_id, exame_id, preco))
+    
+    def listar_exames_por_clinica(self, clinica_id):
+        query = "SELECT exames_por_clinica.id, exames.nome, exames_por_clinica.preco FROM exames_por_clinica INNER JOIN exames ON exames_por_clinica.exame_id = exames.id WHERE clinica_id = ?"
+        resposta = self.fetch_all(query, (clinica_id,))
+        return [{"id": r[0], "nome": r[1], "preco": r[2]} for r in resposta]

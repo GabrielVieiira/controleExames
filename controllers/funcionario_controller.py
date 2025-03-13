@@ -1,14 +1,14 @@
 from models.model import DatabaseManager
 
 class FuncionarioManager(DatabaseManager):
-    def adicionar_funcionario(self, nome, matricula, data_admissao, cargo_id, regional_id):
+    def cadastrar_funcionario(self, nome, cpf, data_nascimento, id_empresa, matricula, data_admissao, cargo_id, regional_id):
         nome = nome.strip().upper()
         primeira_query = "SELECT id FROM funcionarios WHERE nome = ? and matricula = ?"
         existe = self.fetch_one(primeira_query, (nome, matricula,))
         if existe:
             raise ValueError("Funcionário já cadastrado")
-        segunda_query = "INSERT INTO funcionarios (nome, matricula, data_admissao, cargo_id, regional_id) VALUES (?, ?, ?, ?, ?)"
-        self.execute_query(segunda_query,(nome, matricula, data_admissao, cargo_id, regional_id,))
+        segunda_query = "INSERT INTO funcionarios (nome, cpf, data_nascimento, id_empresa, matricula, data_admissao, cargo_id, regional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        self.execute_query(segunda_query,(nome, cpf, data_nascimento, id_empresa, matricula, data_admissao, cargo_id, regional_id,))
 
     def listar_funcionarios(self):
         query = ''' 
@@ -18,7 +18,8 @@ class FuncionarioManager(DatabaseManager):
                     funcionarios.nome, 
                     funcionarios.data_admissao, 
                     cargos.nome, 
-                    regionais.nome 
+                    regionais.nome,
+                    cargos.id
                 FROM 
                     funcionarios 
                 LEFT JOIN 
@@ -27,4 +28,23 @@ class FuncionarioManager(DatabaseManager):
                     regionais ON funcionarios.regional_id = regionais.id
                 WHERE
                     funcionarios.ativo = True '''
-        return self.fetch_all(query)
+        resposta =  self.fetch_all(query)
+        return [{"id": r[0], "matricula": r[1], "nome": r[2], "data_admissao": r[3], "cargo_nome": r[4], "regional": r[5], "cargo_id": r[6] } for r in resposta]
+
+
+
+    def validar_cpf(self, cpf_numeros):
+        cpf = [int(char) for char in cpf_numeros if char.isdigit()]
+
+        if len(cpf) != 11:
+            return False
+
+        if cpf == cpf[::-1]:
+            return False
+
+        for i in range(9, 11):
+            value = sum((cpf[num] * ((i + 1) - num) for num in range(0, i)))
+            digit = ((value * 10) % 11) % 10
+            if digit != cpf[i]:
+                return False
+        return True

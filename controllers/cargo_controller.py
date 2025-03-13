@@ -12,7 +12,8 @@ class CargoManager(DatabaseManager):
 
     def listar_cargos(self):
         query = "SELECT * FROM cargos"
-        return self.fetch_all(query)
+        resposta =  self.fetch_all(query)
+        return [{"id": r[0], "nome": r[1], "ativo": "Ativo" if r[2] == True else "Desativada"} for r in resposta]
     
     def vincular_exame_cargo(self, cargo_id, exame_id, recorrencia):
         primeira_query = "SELECT id FROM exames_necessarios_por_cargo WHERE cargo_id = ? and exame_id = ?"
@@ -22,9 +23,9 @@ class CargoManager(DatabaseManager):
         segunda_query = "INSERT INTO exames_necessarios_por_cargo (cargo_id, exame_id, recorrencia) VALUES (?, ?, ?)"
         self.execute_query(segunda_query, (cargo_id, exame_id, recorrencia))
 
-    def desvincular_exame_cargo(self, exames_necessarios_por_cargo_id):
-        query = "DELETE FROM exames_necessarios_por_cargo WHERE id = ?"
-        self.execute_query(query, (exames_necessarios_por_cargo_id,))
+    def desvincular_exame(self, exame_vinculado):
+        query = "DELETE FROM exames_necessarios_por_cargo WHERE id = ?;"
+        self.execute_query(query, (exame_vinculado,))
 
     def listar_exames_por_cargo(self, cargo_id):
         query = ''' 
@@ -32,18 +33,12 @@ class CargoManager(DatabaseManager):
                     exames_necessarios_por_cargo.id, 
                     exames.id AS exame_id, 
                     exames.nome AS exame_nome, 
-                    exames_por_clinica.preco, 
-                    exames_necessarios_por_cargo.recorrencia, 
-                    clinicas.id AS clinica_id,
-                    clinicas.nome AS clinica_nome
+                    exames_necessarios_por_cargo.recorrencia 
                 FROM 
                     exames_necessarios_por_cargo
                 INNER JOIN 
                     exames ON exames.id = exames_necessarios_por_cargo.exame_id
-                INNER JOIN 
-                    exames_por_clinica epc ON exames.id = exames_por_clinica.exame_id
-                INNER JOIN 
-                    clinicas ON exames_por_clinica.clinica_id = clinicas.id
                 WHERE 
                     exames_necessarios_por_cargo.cargo_id = ?; '''
-        return self.fetch_all(query, (cargo_id,))
+        resposta = self.fetch_all(query, (cargo_id,))
+        return [{"id": r[0], "exame_id": r[1], "exame_nome": r[2], "recorrencia": r[3]} for r in resposta]

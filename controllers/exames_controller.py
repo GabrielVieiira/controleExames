@@ -19,18 +19,19 @@ class ExameManager(DatabaseManager):
             WHERE exames_realizados.validade BETWEEN DATE('now') AND DATE('now', ? || ' days')
         """, (dias,))
     
-    def registrar_exame_realizado(self, funcionario_id, exame_id, data_realizacao, validade):
-        self.execute_query("""
-            INSERT INTO exames_realizados (funcionario_id, exame_id, data_realizacao, validade)
-            VALUES (?, ?, ?, ?)
-        """, (funcionario_id, exame_id, data_realizacao, validade))
+    def registrar_exame_realizado(self, funcionario_id, exame_id, clinica_id, empresa_id, regional_id, data_realizacao, validade, valor_pago):
+        query = """
+            INSERT INTO exames_realizados (funcionario_id, exame_id, clinica_id, empresa_id, regional_id, data_realizacao, validade, valor_pago)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        self.execute_query(query, (funcionario_id, exame_id, clinica_id, empresa_id, regional_id, data_realizacao, validade, valor_pago))
 
-    def calcular_proximo_exame(self, funcionario_id, exame_id, data_realizacao):
-        resultado = self.fetch_all("""
+    def calcular_proximo_exame(self, cargo_id, exame_id, data_realizacao):
+        query = """
             SELECT recorrencia FROM exames_necessarios_por_cargo
-            INNER JOIN funcionarios ON exames_necessarios_por_cargo.cargo_id = funcionarios.cargo_id
-            WHERE funcionarios.id = ? AND exames_necessarios_por_cargo.exame_id = ?
-        """, (funcionario_id, exame_id))
+            WHERE exames_necessarios_por_cargo.cargo_id = ? AND exames_necessarios_por_cargo.exame_id = ?
+        """
+        resultado = self.fetch_all(query, (cargo_id, exame_id))
         if resultado:
             return resultado[0][0]
             # meses = resultado[0][0]
