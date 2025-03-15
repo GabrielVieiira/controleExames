@@ -184,7 +184,8 @@ elif aba == "Gerenciar Funcionários":
                 format_func=lambda x: x["nome"],
                 placeholder="Selecione uma regional",
             )
-            empresas = empresaController.listar_empresas()
+            
+            empresas = empresasController.listar_empresas()
             empresa_selecionada = st.selectbox(
                 "Empresa",
                 options=empresas,
@@ -226,7 +227,7 @@ elif aba == "Gerenciar Funcionários":
         funcionarios = FuncionarioController.listar_funcionarios()
         for func in funcionarios:
             st.write(
-                f" - Matricula: {func['matricula']} - {func['nome']}, {func['data_admissao']}, Cargo: {func['cargo_nome']}, Regional: {func['regional']}"
+                f" - Matricula: {func['matricula']} - {func['nome']}, {func['data_admissao']}, Cargo: {func['cargo_nome']}, Regional: {func['regional_nome']}"
             )
 
 elif aba == "Gerenciar Exames":

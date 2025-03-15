@@ -31,8 +31,8 @@ class CargoManager(DatabaseManager):
         query = ''' 
                 SELECT
                     exames_necessarios_por_cargo.id, 
-                    exames.id AS exame_id, 
-                    exames.nome AS exame_nome, 
+                    exames.id, 
+                    exames.nome, 
                     exames_necessarios_por_cargo.recorrencia 
                 FROM 
                     exames_necessarios_por_cargo

@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from controllers.exames_controller import ExameManager
 from controllers.funcionario_controller import FuncionarioManager
@@ -35,7 +35,8 @@ elif aba == "Exames a Vencer":
 
 elif aba == "Registrar Exame Realizado":
     with st.expander("Cadastrar Exame Realizado"):
-        st.header("📝 Cadastro de Exame Realizado")   
+        st.header("📝 Cadastro de Exame Realizado") 
+
         funcionarios = funcionarioController.listar_funcionarios()
         funcionario_selecionado = st.selectbox(
             "Funcionário", 
@@ -43,6 +44,18 @@ elif aba == "Registrar Exame Realizado":
             options=funcionarios, 
             format_func=lambda x: x['nome']
             )
+
+        clinicas = clinicaController.listar_clinicas()
+        clinica_responsavel = (
+        st.selectbox(
+            "Clínica Responsável",
+            options=clinicas,
+            format_func=lambda x: x["nome"],
+        )
+        if clinicas
+        else None
+        )
+
         exames_necessarios = cargoController.listar_exames_por_cargo(
             funcionario_selecionado['cargo_id']
             )
@@ -53,53 +66,56 @@ elif aba == "Registrar Exame Realizado":
             options=exames_necessarios, 
             format_func=lambda x: x['exame_nome']
             )
+
         data_realizacao = st.date_input(
             "Data da realização", 
             datetime.today(), 
             format="DD/MM/YYYY"
             )
+
         if exame_selecionado:
-            data_proximo_exame = exameController.calcular_proximo_exame(
+            preco_exame = exameController.listar_preco_exame(
+                exame_selecionado['exame_id'], 
+                clinica_responsavel['id']
+                )  
+            if preco_exame:
+                st.text_input(f"Valor do exame:", value=f"R$ {preco_exame:.2f}", disabled=True)
+
+            recorrencia, data_proximo_exame = exameController.calcular_proximo_exame(
                 funcionario_selecionado['cargo_id'], 
                 exame_selecionado['exame_id'], 
                 data_realizacao
                 )
-            meses_validade = st.selectbox(
-                "Validade (meses)", 
-                data_proximo_exame, 
-                disabled=True)
-            clinicas = clinicaController.listar_clinicas()
-            clinica_responsavel = (
             st.selectbox(
-                "Selecione a Clínica Responsável",
-                options=clinicas,
-                format_func=lambda x: x["nome"],
-            )
-            if clinicas
-            else None
-        )
-            validade = data_realizacao + timedelta(days=meses_validade * 30)
+                "Validade (meses):", 
+                recorrencia, 
+                disabled=True)
+            st.date_input(
+                "Próximo exame:", 
+                data_proximo_exame, 
+                format="DD/MM/YYYY", 
+                disabled=True
+                )
 
         if st.button("Cadastrar"):
             exameController.registrar_exame_realizado(
                 funcionario_selecionado['id'], 
-                exame_selecionado['id'], 
-                clinica_responsavel['id'], 
-                regional_id, data_realizacao.strftime('%Y-%m-%d'), 
-                validade.strftime('%Y-%m-%d'), 
-                valor_pago
+                exame_selecionado['exame_id'], 
+                clinica_responsavel['id'],
+                funcionario_selecionado['empresa_id'], 
+                funcionario_selecionado['regional_id'],
+                data_realizacao.strftime('%Y-%m-%d'), 
+                data_proximo_exame.strftime('%Y-%m-%d'), 
+                preco_exame
                 )
             st.success("Exame registrado com sucesso!")
 
-    # with st.expander("Exames Realizados Pelo Funcionário"):
-    #     st.header("📋 Exames Realizados")
-    #     exames_realizados = exameController.fetch_all("""
-    #         SELECT exames.nome, exames_realizados.data_realizacao, exames_realizados.validade
-    #         FROM exames_realizados
-    #         JOIN exames ON exames_realizados.exame_id = exames.id
-    #         WHERE exames_realizados.funcionario_id = ?
-    #     """, (funcionario_id[0],))
-    #     if exames_realizados:
-    #         st.table(exames_realizados)
-    #     else:
-    #         st.info("Nenhum exame realizado por este funcionário.")
+    with st.expander("Exames Realizados Pelo Funcionário"):
+        st.header("📋 Exames Realizados")
+        exames_realizados = exameController.listar_exames_realizados(
+            funcionario_selecionado['id']
+            )
+        if exames_realizados:
+            st.table(exames_realizados)
+        else:
+            st.info("Nenhum exame realizado por este funcionário.")

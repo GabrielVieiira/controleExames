@@ -19,7 +19,9 @@ class FuncionarioManager(DatabaseManager):
                     funcionarios.data_admissao, 
                     cargos.nome, 
                     regionais.nome,
-                    cargos.id
+                    funcionarios.cargo_id,
+                    funcionarios.regional_id,
+                    funcionarios.id_empresa
                 FROM 
                     funcionarios 
                 LEFT JOIN 
@@ -29,7 +31,7 @@ class FuncionarioManager(DatabaseManager):
                 WHERE
                     funcionarios.ativo = True '''
         resposta =  self.fetch_all(query)
-        return [{"id": r[0], "matricula": r[1], "nome": r[2], "data_admissao": r[3], "cargo_nome": r[4], "regional": r[5], "cargo_id": r[6] } for r in resposta]
+        return [{"id": r[0], "matricula": r[1], "nome": r[2], "data_admissao": r[3], "cargo_nome": r[4], "regional_nome": r[5], "cargo_id": r[6], "regional_id": r[7], "empresa_id": r[8] } for r in resposta]
 
 
 
