@@ -14,7 +14,7 @@ class ExameManager(DatabaseManager):
                 funcionarios.nome, 
                 exames.nome, 
                 exames_realizados.data_realizacao, 
-                exames_realizados.validade,
+                exames_realizados.validade
             FROM 
                 exames_realizados
             JOIN 
